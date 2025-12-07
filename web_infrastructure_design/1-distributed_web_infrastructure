@@ -1,0 +1,54 @@
+# Three-Server Web Infrastructure for www.foobar.com
+
+## Overview
+This repository contains a three-server web infrastructure diagram and explanation.  
+The design hosts the website **www.foobar.com** using 1 load balancer and 2 application servers.  
+It improves availability and scalability compared to a single-server architecture.
+
+---
+
+## How a User Accesses the Website
+A user enters **www.foobar.com** in their browser.  
+DNS resolves `www` to the load balancer’s public IP.  
+The user’s browser sends an HTTP request over TCP/IP to the load balancer, which distributes the request to one of the backend servers.
+
+---
+
+## Infrastructure Components
+
+## 1. Load Balancer (HAProxy)
+### Why it is added
+- To distribute traffic between two servers.
+- To increase availability (if one backend server fails, the other continues working).
+- To improve scalability.
+
+### Load Balancing Algorithm
+**Round Robin** is used.  
+It works by sending each new incoming request to the next server in a cyclic order:
+- Request 1 → Server A  
+- Request 2 → Server B  
+- Request 3 → Server A  
+This ensures even distribution.
+
+### Active-Active vs Active-Passive
+This architecture uses **Active-Active**:
+- Both backend servers are running and serving requests at the same time.
+- Load balancer distributes traffic to both.
+
+**Active-Passive** difference:
+- Only one server handles traffic.
+- The other server stays idle (standby) until the primary fails.
+
+---
+
+## 2. Two Backend Servers
+Each backend server contains:
+
+### **Nginx (Web Server)**
+- Serves static content.
+- Receives traffic from load balancer.
+- Passes dynamic requests to the application server.
+
+## Diagram
+Whiteboard diagram included in this repository:
+https://imgur.com/a/9SLoaOK
