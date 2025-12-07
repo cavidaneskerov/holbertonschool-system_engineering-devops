@@ -1,0 +1,121 @@
+# Web Server vs Application Server Infrastructure (With HAProxy Cluster)
+
+## Overview
+This repository explains the difference between a **web server** and an **application server** by designing an infrastructure that separates components and improves availability using a load balancer cluster.
+
+The goal is to demonstrate:
+- Component separation (web server, application server, database each on their own machine)
+- HAProxy cluster for high availability
+- A simple yet scalable infrastructure design
+
+---
+
+# Infrastructure Description
+
+## 1. One Application Server
+This server runs the backend application logic.  
+It receives requests forwarded by the web server and executes dynamic operations (business logic, user authentication, database queries, etc.).
+
+### Why this element is added
+- To isolate application logic from static content.
+- To allow scaling the application independently.
+- To keep backend code separate for better security and maintainability.
+
+---
+
+## 2. One Web Server (On its own server)
+The web server (Nginx) handles:
+- Static files (HTML, CSS, JS, images)
+- Reverse-proxying dynamic requests to the application server
+
+### Why this element is added
+- Separation improves performance and security.
+- Web server is optimized for handling concurrent requests.
+- Application server focuses only on logic instead of serving static content.
+
+---
+
+## 3. One Database Server
+A dedicated MySQL server that stores all persistent data.
+
+### Why this element is added
+- Databases require stable I/O and memory.
+- Keeping it separate avoids resource conflicts.
+- Improves data security and simplifies backups.
+
+---
+
+## 4. HAProxy Load Balancer Cluster (2 Load Balancers Working Together)
+You add **one new load balancer** and cluster it with another HAProxy node.
+
+The two load balancers work in **Active-Passive** mode (or Active-Active depending on configuration), ensuring the service stays online even if one LB fails.
+
+### Why this element is added
+- To avoid single points of failure.
+- To provide uninterrupted access to the web server.
+- To distribute traffic efficiently.
+- To ensure high availability of the entire system.
+
+---
+
+# Application Server vs Web Server (Key Differences)
+
+## **Web Server**
+- Handles HTTP requests directly from users.
+- Serves static files.
+- Can reverse-proxy requests to the application server.
+- Optimized for concurrency and speed.
+
+**Examples:** Nginx, Apache
+
+## **Application Server**
+- Executes backend logic.
+- Processes dynamic requests.
+- Interacts with the database.
+- Returns processed results to the web server.
+
+**Examples:** Gunicorn, uWSGI, Node.js application runtime, Java application servers
+
+---
+
+# Why Components Are Split Into Separate Servers
+
+### 1. **Performance**
+Each service can use resources without competing with the others.
+
+### 2. **Scalability**
+- You can scale only the part that needs more capacity (e.g., web servers).
+- Databases can scale independently through replication.
+
+### 3. **Security**
+- Application and database servers are not directly exposed to the internet.
+- Attack surface is reduced.
+
+### 4. **Maintainability**
+- Easier updates (restart web server without touching the application server).
+- Logs and errors are isolated per component.
+
+### 5. **Fault Isolation**
+- If the application server crashes, the web server stays up.
+- If the database fails, the application server doesn't take the web server down.
+
+---
+
+# Summary
+
+This infrastructure demonstrates clean separation of responsibilities:
+
+| Component | Function | Runs On |
+|----------|----------|---------|
+| Web Server | Handles static content and proxies requests | Dedicated server |
+| Application Server | Runs backend logic | Dedicated server |
+| Database | Stores all data | Dedicated server |
+| Load Balancer Cluster | Provides high availability and traffic distribution | Two HAProxy nodes |
+
+By isolating components and using an HAProxy cluster, this architecture becomes more reliable, more scalable, easier to secure, and easier to maintain.
+
+---
+
+# Diagram
+Whiteboard diagram included in this repository:
+https://imgur.com/a/0YY1v3Y
