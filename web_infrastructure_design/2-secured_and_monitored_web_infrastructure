@@ -1,0 +1,162 @@
+# Secure and Monitored Three-Server Web Infrastructure for www.foobar.com
+
+## Overview
+This repository contains the whiteboard diagram and full explanation of a secure, monitored, three-server web infrastructure for **www.foobar.com**.  
+The system includes a load balancer, two application servers, HTTPS encryption, firewalls, and monitoring clients.
+
+---
+
+## How a User Accesses the Website
+A user enters **https://www.foobar.com** in their browser.  
+DNS resolves `www` to the load balancer’s public IP.  
+The user’s browser establishes an **HTTPS** connection using TLS, and the request is routed through firewalls into the infrastructure, where the load balancer distributes the request to one of the backend servers.
+
+---
+
+# Infrastructure Components
+
+## 1. Firewalls (3 Total)
+### Why they are added
+- To enforce security boundaries.
+- To block unauthorized traffic at each layer.
+- To reduce the attack surface.
+
+### What firewalls are for
+Firewalls filter incoming and outgoing traffic based on rules.  
+They:
+- Allow only specific ports (80/443/3306).
+- Block malicious or unexpected connections.
+- Separate the public network from internal resources.
+
+### Placement
+1. Firewall 1 → Between the internet and the load balancer.  
+2. Firewall 2 → Between the load balancer and backend servers.  
+3. Firewall 3 → Between backend servers and the database.
+
+---
+
+## 2. SSL Certificate (HTTPS)
+### Why traffic is served over HTTPS
+- To encrypt communication between the user and the server.
+- To protect credentials, cookies, and personal data.
+- To prevent MITM attacks.
+- To ensure user trust (browser padlock).
+
+The SSL certificate is installed at the **load balancer**, enabling encrypted traffic between the client and the entry point of the infrastructure.
+
+---
+
+## 3. Monitoring Clients (3 Total)
+### Why monitoring is added
+Monitoring is necessary to:
+- Detect failures and degraded performance.
+- Know when services stop responding.
+- Track traffic, CPU load, memory usage, disk usage, and errors.
+- Provide logs and metrics for debugging and auditing.
+
+### How the monitoring tool collects data
+Monitoring agents (e.g., Sumologic collectors or other agents):
+- Run locally on each server.
+- Collect logs, metrics, and events (Nginx logs, system logs, MySQL logs).
+- Send data to a centralized monitoring service.
+- The service aggregates, analyzes, and displays dashboards and alerts.
+
+### How to monitor web server QPS (Queries Per Second)
+To monitor Nginx QPS:
+1. Enable Nginx status module (`stub_status`).
+2. Monitoring agent scrapes the `/status` endpoint.
+3. Metrics such as:
+   - Active connections
+   - Requests per second
+   - Reading/Writing/Waiting  
+   are sent to the monitoring service.
+4. Alerts can be created for high QPS or unusual spikes.
+
+---
+
+# Load Balancer (HAProxy)
+### Why it is added
+- To distribute traffic between backend servers.
+- To improve reliability and availability.
+- To prevent overloading one machine.
+
+### Load balancing algorithm
+**Round Robin**  
+Each new request is routed to the next server in sequence, providing even distribution.
+
+### Setup type: Active-Active
+Both backend servers:
+- Are running simultaneously.
+- Receive traffic from the load balancer.
+
+**Difference from Active-Passive:**
+- Active-Passive has one server doing all work while the other waits as backup.
+- Active-Active improves resource usage and performance.
+
+---
+
+# Backend Servers (2 Servers)
+Each backend server contains:
+
+### Nginx (Web Server)
+Handles static content and routes dynamic traffic to the application server.
+
+### Application Server
+Runs backend logic (authentication, routing, business logic).
+
+### Application Files
+Local copy of the codebase.
+
+---
+
+# Database (Primary-Replica MySQL Cluster)
+### How it works
+- **Primary node (Master):**  
+  Handles all **writes** and pushes changes to the Replica.
+
+- **Replica node (Slave):**  
+  Handles **reads** and receives continuous updates from the Primary.
+
+---
+
+# Issues With This Infrastructure
+
+## 1. SSL Termination at the Load Balancer Is an Issue
+When SSL is terminated at the load balancer:
+- Traffic from the load balancer to backend servers is **not encrypted** unless re-encryption is configured.
+- This creates a potential internal attack vector.
+- Sensitive data may be exposed inside the private network.
+
+---
+
+## 2. Only One MySQL Server Can Accept Writes
+This is a problem because:
+- The Primary database is a **single point of failure**.
+- If the Primary goes down:
+  - The website cannot process any writes.
+  - Manual failover is required.
+- Heavy write load can overwhelm one server.
+
+---
+
+## 3. Servers With All the Same Components Might Be a Problem
+If each server runs:
+- Web server  
+- Application server  
+- Database server  
+
+Then:
+- Failure of one server affects multiple layers of the stack.
+- Scaling becomes difficult (you cannot scale database independently).
+- Resource contention occurs (database may consume RAM needed for app logic).
+- Updates become riskier and harder to manage.
+- Security attack surface increases.
+
+This is why modern architectures separate components into roles and layers.
+
+---
+
+# Infrastructure Diagram
+Whiteboard diagram included in this repository:
+https://imgur.com/a/5N0jZYy
+
