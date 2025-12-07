@@ -1,0 +1,70 @@
+# One-Server Web Infrastructure (www.foobar.com)
+
+## Overview
+This directory contains a simple one-server web infrastructure diagram and explanation.  
+The setup hosts the website reachable at **www.foobar.com** using a classic LAMP-style architecture.
+
+---
+
+## How a User Accesses the Website
+A user enters **www.foobar.com** in their browser.  
+The browser resolves the domain name to the server’s IP address (`8.8.8.8`) through DNS and establishes a network connection using HTTP/HTTPS. The request is then handled by the web server.
+
+---
+
+## Infrastructure Components
+
+### 1. Domain Name
+- The domain `foobar.com` has a **DNS A record**:
+  - `www` → `8.8.8.8`
+- Its job is to translate a human-readable name into an IP address.
+
+### 2. Server
+A server is a physical or virtual machine that runs software to handle client requests.  
+Our single server hosts:
+- Nginx (web server)
+- Application server
+- Application code
+- MySQL database
+
+### 3. Web Server (Nginx)
+- Receives HTTP requests from users.
+- Serves static files (HTML, CSS, JS, images).
+- For dynamic requests, forwards them to the application server.
+
+### 4. Application Server
+- Executes the application logic.
+- Processes dynamic content.
+- Interacts with the database.
+- Returns responses back through the web server.
+
+### 5. Application Files
+- The codebase (HTML, backend code, configuration files).
+
+### 6. Database (MySQL)
+- Stores persistent data such as users, posts, orders, etc.
+- Responds to queries from the application server.
+
+### 7. Communication
+The server communicates with the user's browser using:
+- **HTTP/HTTPS** over TCP/IP.
+
+---
+
+## Issues With This Architecture
+
+### 1. Single Point of Failure (SPOF)
+If this single server goes down, the entire website becomes unreachable.
+
+### 2. Downtime During Maintenance
+Deploying new code or restarting services results in unavoidable downtime.
+
+### 3. Cannot Scale Easily
+If traffic increases heavily, the single server cannot handle all requests.  
+You cannot add more servers or load balance with this design.
+
+---
+
+## Diagram
+Whiteboard diagram included in this repository:
+https://imgur.com/a/Fta1gcN
